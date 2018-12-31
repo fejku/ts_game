@@ -1,0 +1,54 @@
+<!-- ./client/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <div>
+      <input id="inputName" type="text">
+      <button id="sendName">Send</button>
+  </div>
+  
+
+  <button onClick="sendMsg()">Hit Me</button>
+  <button id="addToRoom">Add me to room</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3001');
+    const storage = sessionStorage;
+
+    socket.on('connect', () => {
+      const userHash = storage.getItem('userHash');
+      socket.emit('userHash', userHash);
+    });
+
+    socket.on('userHash', (userHash) => {
+      storage.setItem('userHash', userHash);
+    });
+
+
+    
+    // socket.on("message", function(data) {
+    //   console.log(data);
+    // });
+
+    // function sendMsg() {
+    //   socket.emit("message", "HELLO WORLD");
+    // }
+
+    document.getElementById('sendName').addEventListener('click', () => {
+      const username = document.getElementById('inputName').value;
+      socket.emit('userName', username);
+    })
+
+    document.getElementById('addToRoom').addEventListener('click', () => {
+      socket.emit('addToRoom', storage.getItem('userHash'))
+    });
+  </script>
+</body>
+</html>
