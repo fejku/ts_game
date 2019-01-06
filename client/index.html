@@ -8,47 +8,67 @@
   <title>Document</title>
 </head>
 <body>
-  <div>
-      <input id="inputName" type="text">
-      <button id="sendName">Send</button>
-  </div>
-  
+  <!-- <div>
+    Waiting room
+    <ul id='waiting_room'></ul>
+  </div> -->
 
-  <button onClick="sendMsg()">Hit Me</button>
-  <button id="addToRoom">Add me to room</button>
+  <!-- <button id="addToRoom">Add me to room</button> -->
+
+  <div id="username" style="display: none">
+    User name:<input type="text" id="userNameInput">
+    <button id="submitName">Set name</button>
+  </div>
+
+  <div>
+    Rooms
+    <ul id="roomList"></ul>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
   <script>
-    const socket = io('http://localhost:3001');
+    const socket = io('http://localhost:3000');
     const storage = sessionStorage;
 
     socket.on('connect', () => {
       const userHash = storage.getItem('userHash');
-      socket.emit('userHash', userHash);
+      socket.emit('userHash', userHash, (recivedHash) => {
+        storage.setItem('userHash', recivedHash);
+      });
     });
 
-    socket.on('userHash', (userHash) => {
-      storage.setItem('userHash', userHash);
+    socket.on('getUserName', (name) => {
+      document.getElementById('username').style.display = "block";
+    });    
+
+    socket.on('nameSet', () => {
+      document.getElementById('username').style.display = "none";      
+      refreshRoomList();
     });
 
-
-    
-    // socket.on("message", function(data) {
-    //   console.log(data);
-    // });
-
-    // function sendMsg() {
-    //   socket.emit("message", "HELLO WORLD");
-    // }
-
-    document.getElementById('sendName').addEventListener('click', () => {
-      const username = document.getElementById('inputName').value;
-      socket.emit('userName', username);
-    })
-
-    document.getElementById('addToRoom').addEventListener('click', () => {
-      socket.emit('addToRoom', storage.getItem('userHash'))
+    document.getElementById('submitName').addEventListener('click', () => {
+      const userName = document.getElementById('userNameInput').value;
+      socket.emit('setUserName', userName);
     });
+
+    function refreshRoomList() {
+      const ul = document.getElementById('roomList');
+      ul.innerHTML = '';
+
+      socket.emit('getRoomList', (roomList) => {
+        for(const room of roomList) {
+          const li = document.createElement('li');
+
+          let users = '';
+          for (const user of room.users) {
+            users += user.name
+          }
+
+          li.appendChild(document.createTextNode(users));
+          ul.appendChild(li);      
+        } 
+      })
+    }
   </script>
 </body>
 </html>
